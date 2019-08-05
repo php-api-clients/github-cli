@@ -1,0 +1,20 @@
+#!/usr/bin/env php
+<?php declare(strict_types=1);
+
+use ReactiveApps\App;
+use ReactiveApps\ContainerFactory;
+
+if (!ini_get('date.timezone')) {
+    ini_set('date.timezone', 'UTC');
+}
+
+const ROOT = __DIR__ . DIRECTORY_SEPARATOR;
+
+/**
+ * Require Composer's autoloader
+ */
+require ROOT . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+
+exit((function (array $argv) {
+    return ContainerFactory::create()->get(App::class)->boot($argv);
+})($argv));
