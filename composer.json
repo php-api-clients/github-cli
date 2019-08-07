@@ -9,6 +9,7 @@
         }
     ],
     "require": {
+        "php": "^7.3",
         "api-clients/appveyor": "dev-master",
         "api-clients/github": "dev-master",
         "api-clients/scrutinizer": "dev-master",

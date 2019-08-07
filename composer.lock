@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b4431e26404a94b20855e1f941e48f60",
+    "content-hash": "e0f75745051c17376f09f81101bf333b",
     "packages": [
         {
             "name": "api-clients/appveyor",
@@ -11462,7 +11462,9 @@
     },
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": "^7.3"
+    },
     "platform-dev": [],
     "platform-overrides": {
         "php": "7.3"
