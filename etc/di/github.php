@@ -12,7 +12,7 @@ return [
     ) {
         $client = AsyncClient::create(
             $loop,
-            strlen(getenv('GITHUB_TOKEN')) > 0 ? new Token(getenv('GITHUB_TOKEN')) : new Anonymous()
+            getenv('GITHUB_TOKEN') !== false ? new Token(getenv('GITHUB_TOKEN')) : new Anonymous()
         );
 
         return $client;
