@@ -23,7 +23,7 @@ class WhoAmI implements Command
         try {
             echo 'You are: ', (yield $this->github->whoami())->name(), PHP_EOL;
         } catch (UnauthorizedException $unauthorizedException) {
-            echo 'You are anonymous', PHP_EOL;
+            echo 'anonymous', PHP_EOL;
         } catch (\Throwable $throwable) {
             echo $throwable;
         }
