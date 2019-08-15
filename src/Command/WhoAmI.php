@@ -5,6 +5,7 @@ namespace ApiClients\Cli\Github\Command;
 use ApiClients\Client\Github\AsyncClientInterface;
 use ApiClients\Tools\Psr7\HttpStatusExceptions\UnauthorizedException;
 use ReactiveApps\Command\Command;
+use ReactiveApps\ExitCode;
 
 class WhoAmI implements Command
 {
@@ -24,10 +25,8 @@ class WhoAmI implements Command
             echo 'You are: ', (yield $this->github->whoami())->name(), PHP_EOL;
         } catch (UnauthorizedException $unauthorizedException) {
             echo 'anonymous', PHP_EOL;
-        } catch (\Throwable $throwable) {
-            echo $throwable;
         }
 
-        die();
+        return ExitCode::SUCCESS;
     }
 }
