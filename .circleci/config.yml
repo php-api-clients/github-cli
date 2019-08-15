@@ -1,0 +1,124 @@
+version: 2.1
+
+.scheduled_workflow_jobs: &scheduled_workflow_jobs
+  - lint
+  - build: &build
+      requires:
+        - lint
+  - test: &test
+      requires:
+        - build
+  - scan-vulnerability: &scan-vulnerability
+      requires:
+        - build
+  - push:
+      context: dockerhub
+      filters:
+        branches:
+          only:
+            - master
+      requires:
+        - test
+        - scan-vulnerability
+
+.default_workflow_jobs: &default_workflow_jobs
+  - lint
+  - build: *build
+  - test: *test
+  - scan-vulnerability: *scan-vulnerability
+  - push:
+      context: dockerhub
+      filters:
+        branches:
+          only:
+            - master
+      requires:
+        - test
+        - scan-vulnerability
+
+workflows:
+  version: 2
+  lint-build-test-push:
+    jobs: *default_workflow_jobs
+  scheduled:
+    jobs: *scheduled_workflow_jobs
+    triggers:
+      - schedule:
+          cron: "0 3 * * 1,4"
+          filters:
+            branches:
+              only:
+                - master
+
+commands:
+  docker_load:
+    description: "Load Docker images from file"
+    parameters:
+      image:
+        type: string
+    steps:
+      - run: docker load -i ./tmp/github_cli.tar
+  docker_load_all:
+    description: "Load all available docker images"
+    steps:
+      - docker_load:
+          image: github-cli
+
+jobs:
+  lint:
+    machine: true
+    steps:
+      - checkout
+      - run: make lint
+  test:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./tmp
+      - docker_load:
+          image: zts
+      - run: make docker-test
+      - store_test_results:
+          path: ./tmp/test-results
+  scan-vulnerability:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./tmp
+      - run:
+          name: Update Docker Compose
+          command: |
+            sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+      - run:
+          name: Install clair-scanner
+          command: |
+            sudo curl -L https://github.com/arminc/clair-scanner/releases/download/v8/clair-scanner_linux_amd64 -o /usr/local/bin/clair-scanner
+            sudo chmod +x /usr/local/bin/clair-scanner
+      - docker_load_all
+      - run: make ci-scan-vulnerability
+      - store_artifacts:
+          path: ./tmp/clair
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run: make docker-build
+      - run: cat ./tmp/build.tags | xargs -I % docker inspect --format='%={{.Id}}:{{index .ContainerConfig.Env 7}}' %
+      - run: docker save phpapiclients/github-cli -o ./tmp/github_cli.tar
+      - persist_to_workspace:
+          root: ./tmp
+          paths:
+            - github_cli.tar
+            - build.tags
+  push:
+    machine: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./tmp
+      - docker_load:
+          image: github-cli
+      - run: make docker-ci-push
